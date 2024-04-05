@@ -52,6 +52,32 @@ app.post('/chat', upload.none(), async (req, res) => {
         res.json(response);
 });
 
+app.post('/image', upload.none(), async (req, res) => {
+    // get prompt from the form data
+    const prompt = req.body.prompt;
+    console.log("PROMPT: ", prompt);
+
+    // send the prompt to the OpenAI API
+    const response = await openai.chat.completions.create({
+        model: "image",
+        messages: [
+          {
+            "role": "user",
+            "content": prompt
+          }
+        ],
+        temperature: 1,
+        max_tokens: 50,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+      });
+
+      // send the response as json
+        res.json(response);
+
+});
+
 // start server and listen to port 3001
 app.listen(port, () => {
     console.log(`Server started on http://localhost:${port}`);

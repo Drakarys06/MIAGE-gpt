@@ -1,18 +1,16 @@
-const endpointURL = 'http://localhost:3001/chat';
-
-let outputElement, submitButton, inputElement, historyElement, butonElement;
-
+const endpointURL = 'http://localhost:3001';
+let outputElement, submitButton, inputElement, historyElement, buttonElement;
 window.onload = init;
 
 function init() {
-    outputElement = document.querySelector('#output');
+    outputElement = document.querySelector('#output'); //
     submitButton = document.querySelector('#submit');
     submitButton.onclick = getMessage;
 
     inputElement = document.querySelector('input');
     historyElement = document.querySelector('.history');
-    butonElement = document.querySelector('button');
-    butonElement.onclick = clearInput;
+    buttonElement = document.querySelector('button');
+    buttonElement.onclick = clearInput;
 }
 
 function clearInput() {
@@ -20,33 +18,64 @@ function clearInput() {
 }
 
 async function getMessage() {
-    let prompt = inputElement.value;
-    // on met le prompt en minuscules
-    prompt = prompt.toLowerCase();
-    console.log(prompt.startsWith("/image"));
+    let prompt = inputElement.value.toLowerCase();
+    let requestURL;
 
-    // TODO : si le prompt commence par "/image" alors
-    switch (prompt) {
-        case prompt.startsWith("/clear"):
-            console.log('clear');
-            return;
-        case prompt.startsWith("/history"):
-            console.log('history');
-            return;
-        case prompt.startsWith("/image"):
-            getImageFromDallE(prompt);  // on appelle getImageFromDallE(prompt (sans le "/image" et l'espace))
-            return;
-        default:
-            getResponseFromServer(prompt);  // sinon on appelle getResponseFromServer(prompt) pour obtenir une réponse de gpt3.5
+    if (prompt.startsWith("/clear")) {
+        console.log('clear');
+        return;
+    } else if (prompt.startsWith("/history")) {
+        console.log('history');
+        return;
+    } else if (prompt.startsWith("/image")) {
+        requestURL = endpointURL.concat('/image');
+        prompt = prompt.replace('/image', '');
+        await getImageFromDallE(prompt, requestURL);
+        return;
+    } else {
+        requestURL = endpointURL.concat('/chat');
+        await getResponseFromServer(prompt, requestURL);
     }
 }
 
-// Fonction pour obtenir une réponse image de l'API DallE
-async function getImageFromDallE(prompt) {
-    console.log(prompt.slice(7)); // on affiche le prompt sans le "/image" et l'espace
+async function getImageFromDallE(prompt, requestURL) {
+    try {
+        const promptData = new FormData();
+        promptData.append('prompt', prompt);
+
+        const response = await fetch(requestURL, {
+            method: 'POST',
+            body: promptData
+        });
+
+        const data = await response.json();
+
+        console.log(data);
+        const imageSrc = data.choices[0].message.content; // Assurez-vous que c'est l'URL de l'image
+
+        // Créez un élément img pour l'image
+        const imgElement = document.createElement('img');
+        imgElement.src = imageSrc; // Définissez l'attribut src avec l'URL de l'image
+        imgElement.alt = 'Image from Dall-E'; // Ajoutez un texte alternatif pour l'image
+
+        // Ajoutez l'image dans le div output
+        outputElement.append(imgElement);
+
+        // Ajoutez dans l'historique sur la gauche
+        if (data.choices[0].message.content) {
+            const pElement = document.createElement('p');
+            pElement.textContent = inputElement.value;
+            pElement.onclick = () => {
+                inputElement.value = pElement.textContent;
+            };
+            historyElement.append(pElement);
+        }
+    } catch (error) {
+        console.log(error);
+    }
 }
 
-async function getResponseFromServer(prompt) {
+async function getResponseFromServer(prompt, requestURL) {
     try {
         // On envoie le contenu du prompt dans un FormData (eq. formulaires multipart)
         const promptData = new FormData();
@@ -54,9 +83,9 @@ async function getResponseFromServer(prompt) {
 
         // Envoi de la requête POST par fetch, avec le FormData dans la propriété body
         // côté serveur on récupèrera dans req.body.prompt la valeur du prompt,
-        // avec nodeJS on utilisera le module multer pour récupérer les donénes 
+        // avec nodeJS on utilisera le module multer pour récupérer les données multipart/form-data
         // multer gère les données multipart/form-data
-        const response = await fetch(endpointURL, {
+        const response = await fetch(requestURL, {
             method: 'POST',
             body: promptData
         });
@@ -84,4 +113,5 @@ async function getResponseFromServer(prompt) {
         console.log(error);
     }
 }
+
 
