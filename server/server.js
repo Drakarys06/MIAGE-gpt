@@ -2,6 +2,8 @@
 import express from 'express';
 import { API_KEY } from './config.js';
 import OpenAI from "openai";
+import fs from "fs";
+import path from "path";
 // handle form data posted
 import multer from 'multer';
 
@@ -10,6 +12,8 @@ import multer from 'multer';
 const openai = new OpenAI({
   apiKey: API_KEY,
 });
+
+const speechFile = path.resolve("./speech.mp3");
 
 const app = express();
 const port = 3001;
@@ -76,6 +80,21 @@ app.post('/image', upload.none(), async (req, res) => {
       // send the response as json
         res.json(response);
 
+});
+
+app.post('/voice', upload.none(), async (req, res) => {
+    // get prompt from the form data
+    const prompt = req.body.prompt;
+    console.log("PROMPT: ", prompt);
+
+    const mp3 = await openai.audio.speech.create({
+        model: "tts-1",
+        voice: "fable",
+        input: prompt,
+    });
+    console.log(speechFile);
+    const buffer = Buffer.from(await mp3.arrayBuffer());
+    await fs.promises.writeFile(speechFile, buffer);
 });
 
 // start server and listen to port 3001

@@ -32,25 +32,34 @@ async function getMessage() {
         prompt = prompt.replace('/image', '');
         await getImageFromDallE(prompt, requestURL);
         return;
+    } else if (prompt.startsWith("/voice")) {
+        requestURL = endpointURL.concat('/voice');
+        prompt = prompt.replace('/voice', '');
+        await getVoice(prompt, requestURL);
+
     } else {
         requestURL = endpointURL.concat('/chat');
         await getResponseFromServer(prompt, requestURL);
     }
 }
 
+async function sendServerRequest(prompt, requestURL) {
+    const promptData = new FormData();
+    promptData.append('prompt', prompt);
+
+    const response = await fetch(requestURL, {
+        method: 'POST',
+        body: promptData
+    });
+
+    const data = await response.json();
+
+    console.log(data);
+}
+
 async function getImageFromDallE(prompt, requestURL) {
     try {
-        const promptData = new FormData();
-        promptData.append('prompt', prompt);
-
-        const response = await fetch(requestURL, {
-            method: 'POST',
-            body: promptData
-        });
-
-        const data = await response.json();
-
-        console.log(data);
+        await sendServerRequest(prompt, requestURL);
         const imageSrc = data.choices[0].message.content; // Assurez-vous que c'est l'URL de l'image
 
         // Créez un élément img pour l'image
@@ -75,24 +84,18 @@ async function getImageFromDallE(prompt, requestURL) {
     }
 }
 
+async function getVoice(prompt, requestURL) {
+    try {
+        await sendServerRequest(prompt, requestURL);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 async function getResponseFromServer(prompt, requestURL) {
     try {
-        // On envoie le contenu du prompt dans un FormData (eq. formulaires multipart)
-        const promptData = new FormData();
-        promptData.append('prompt', prompt);
+        await sendServerRequest(prompt, requestURL);
 
-        // Envoi de la requête POST par fetch, avec le FormData dans la propriété body
-        // côté serveur on récupèrera dans req.body.prompt la valeur du prompt,
-        // avec nodeJS on utilisera le module multer pour récupérer les données multipart/form-data
-        // multer gère les données multipart/form-data
-        const response = await fetch(requestURL, {
-            method: 'POST',
-            body: promptData
-        });
-
-        const data = await response.json();
-
-        console.log(data);
         const chatGptReponseTxt = data.choices[0].message.content;
         // On cree un element p pour la réponse
         const pElementChat = document.createElement('p');
