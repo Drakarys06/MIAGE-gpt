@@ -1,0 +1,37 @@
+.side-bar {
+  background-color: #202123;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  width: 300px;
+}
+
+button {
+  border: solid 0.5px rgba(255, 255, 255, 0.5);
+  background-color: transparent;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 10px 0;
+  cursor: pointer;
+  color: white;
+}
+
+.history {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-top: 20px;
+}
+
+.history p {
+  cursor: pointer;
+  padding: 5px 0;
+}
+
+nav {
+  border: solid 0.5px rgba(255, 255, 255, 0.5);
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+}
