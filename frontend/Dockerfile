@@ -1,5 +1,5 @@
 # Utilisez l'image officielle Node.js comme image de base pour la construction
-FROM node:20.12.2 AS build
+FROM node:20 AS build
 
 # Définissez le répertoire de travail dans le conteneur
 WORKDIR /app
@@ -20,7 +20,7 @@ RUN npm run build --prod
 FROM nginx:alpine
 
 # Copiez les fichiers construits depuis l'étape de build
-COPY --from=build /app/dist/frontend /usr/share/nginx/html
+COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 
 # Exposez le port sur lequel l'application s'exécute
 EXPOSE 80
