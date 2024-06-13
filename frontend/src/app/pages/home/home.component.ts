@@ -1,20 +1,48 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { GptService } from '../../core/services/gpt.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ConversationService } from '../../core/services/conversation.service';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   prompt: string = '';
   conversation: { sender: string; message: string | SafeHtml }[] = [];
+  userId: string = 'some-user-id'; // This should be dynamically set based on the authenticated user
 
   constructor(
+    private conversationService: ConversationService,
     private gptService: GptService,
     private sanitizer: DomSanitizer,
   ) {}
+
+  ngOnInit(): void {
+    this.loadConversation();
+  }
+
+  loadConversation() {
+    this.conversationService.loadConversation().subscribe((response) => {
+      if (response.success) {
+        this.conversation = response.conversation.messages.map((msg: any) => ({
+          ...msg,
+          message: this.sanitizer.bypassSecurityTrustHtml(msg.message),
+        }));
+      }
+    });
+  }
+
+  saveConversation() {
+    this.conversationService
+      .saveConversation(this.conversation)
+      .subscribe((response) => {
+        if (response.success) {
+          console.log('Conversation saved successfully');
+        }
+      });
+  }
 
   getMessage() {
     if (this.prompt.trim() === '') return;
@@ -28,13 +56,15 @@ export class HomeComponent {
     } else {
       this.getChatResponse(this.prompt);
     }
-    this.prompt = ''; // Clear input after sending message
+    this.prompt = '';
+    this.saveConversation();
   }
 
   getChatResponse(prompt: string) {
     this.gptService.getChatResponse(prompt).subscribe((response) => {
       const botMessage = response.data.choices[0].message.content;
       this.conversation.push({ sender: 'bot', message: botMessage });
+      this.saveConversation();
     });
   }
 
@@ -48,6 +78,7 @@ export class HomeComponent {
         sender: 'bot',
         message: sanitizedImage,
       });
+      this.saveConversation();
     });
   }
 
@@ -63,6 +94,7 @@ export class HomeComponent {
         sender: 'bot',
         message: sanitizedAudio,
       });
+      this.saveConversation();
     });
   }
 

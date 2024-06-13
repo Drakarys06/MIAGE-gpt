@@ -1,7 +1,7 @@
 import request from "supertest";
 import express from "express";
 import { setupMiddleware } from "../core/middleware.js";
-import { setupRoutes } from "../api/routes/index.js";
+import { setupRoutes } from "../api/routes/api.js";
 
 const app = express();
 setupMiddleware(app);
