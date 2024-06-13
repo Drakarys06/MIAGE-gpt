@@ -1,0 +1,41 @@
+# This is a GitHub Actions workflow file named 'Dev CI'.
+# It is triggered on every push or pull request to the 'develop' branch.
+name: Dev CI
+on:
+  push:
+    # The workflow runs when code is pushed to the 'develop' branch.
+    branches: [ develop ]
+  pull_request:
+    # The workflow also runs when a pull request is made to the 'develop' branch.
+    branches: [ develop ]
+
+# The jobs that the workflow will run.
+jobs:
+  setup:
+    # The job runs on the latest version of Ubuntu.
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # The Node.js version to use.
+        node-version: [ 20.9.0 ]
+        # The locations where the job will run.
+        location: [ 'backend', 'frontend' ]
+    steps:
+      - name: Checkout code
+        # This step checks out the repository's code.
+        uses: actions/checkout@v3
+      - name: Set up Node version ${{ matrix.node-version }}
+        # This step sets up the specified Node.js version.
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies for ${{ matrix.location }}
+        # This step installs the dependencies for the specified location.
+        run: npm ci
+        working-directory: ${{ matrix.location }}
+      - name: Build
+        # This step builds the project.
+        # It only runs if the location is 'frontend'.
+        run: npm run build
+        working-directory: ${{ matrix.location }}
+        if: ${{ matrix.location == 'frontend' }}
