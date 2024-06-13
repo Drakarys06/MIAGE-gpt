@@ -1,0 +1,10 @@
+<section class="main">
+  <div id="output" class="output">
+    <div *ngFor="let message of conversation" [ngClass]="formatMessage(message).className" [innerHTML]="formatMessage(message).content"></div>  </div>
+  <div class="bottom-section">
+    <div class="input-container">
+      <input [(ngModel)]="prompt" (keyup.enter)="getMessage()" placeholder="Type a message...">
+      <div id="submit" (click)="getMessage()">➢</div>
+    </div>
+  </div>
+</section>

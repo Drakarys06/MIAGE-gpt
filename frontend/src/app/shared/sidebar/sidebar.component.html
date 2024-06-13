@@ -1,0 +1,9 @@
+<section class="side-bar">
+  <button (click)="newChat()">New chat</button>
+  <div class="history">
+    <p *ngFor="let item of history" (click)="setPrompt(item)">{{ item }}</p>
+  </div>
+  <nav>
+    <p>MIAGE GPT</p>
+  </nav>
+</section>
