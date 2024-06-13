@@ -1,20 +1,54 @@
-import { Component } from '@angular/core';
-import { GptService } from '../../core/services/gpt.service';
+import { Component, OnInit } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ConversationService } from '../../core/services/conversation.service';
+import { GptService } from '../../core/services/gpt.service';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   prompt: string = '';
   conversation: { sender: string; message: string | SafeHtml }[] = [];
 
   constructor(
+    private conversationService: ConversationService,
     private gptService: GptService,
     private sanitizer: DomSanitizer,
   ) {}
+
+  ngOnInit(): void {
+    this.loadConversation();
+  }
+
+  loadConversation() {
+    this.conversationService.loadConversation().subscribe((response) => {
+      if (response.success) {
+        this.conversation = response.conversation.messages.map((msg: any) => ({
+          ...msg,
+          message: this.sanitizer.bypassSecurityTrustHtml(msg.message),
+        }));
+      }
+    });
+  }
+
+  saveConversation() {
+    const sanitizedConversation = this.conversation.map((msg) => ({
+      sender: msg.sender,
+      message:
+        typeof msg.message === 'string'
+          ? msg.message
+          : (msg.message as SafeHtml).toString(),
+    }));
+    this.conversationService
+      .saveConversation(sanitizedConversation)
+      .subscribe((response) => {
+        if (response.success) {
+          console.log('Conversation saved successfully');
+        }
+      });
+  }
 
   getMessage() {
     if (this.prompt.trim() === '') return;
@@ -28,13 +62,15 @@ export class HomeComponent {
     } else {
       this.getChatResponse(this.prompt);
     }
-    this.prompt = ''; // Clear input after sending message
+    this.prompt = '';
+    this.saveConversation();
   }
 
   getChatResponse(prompt: string) {
     this.gptService.getChatResponse(prompt).subscribe((response) => {
       const botMessage = response.data.choices[0].message.content;
       this.conversation.push({ sender: 'bot', message: botMessage });
+      this.saveConversation();
     });
   }
 
@@ -48,6 +84,7 @@ export class HomeComponent {
         sender: 'bot',
         message: sanitizedImage,
       });
+      this.saveConversation();
     });
   }
 
@@ -63,6 +100,7 @@ export class HomeComponent {
         sender: 'bot',
         message: sanitizedAudio,
       });
+      this.saveConversation();
     });
   }
 
