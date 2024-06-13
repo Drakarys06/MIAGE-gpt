@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { GptService } from '../../core/services/gpt.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ConversationService } from '../../core/services/conversation.service';
+import { GptService } from '../../core/services/gpt.service';
 
 @Component({
   selector: 'app-home',
@@ -11,7 +11,6 @@ import { ConversationService } from '../../core/services/conversation.service';
 export class HomeComponent implements OnInit {
   prompt: string = '';
   conversation: { sender: string; message: string | SafeHtml }[] = [];
-  userId: string = 'some-user-id'; // This should be dynamically set based on the authenticated user
 
   constructor(
     private conversationService: ConversationService,
@@ -35,8 +34,15 @@ export class HomeComponent implements OnInit {
   }
 
   saveConversation() {
+    const sanitizedConversation = this.conversation.map((msg) => ({
+      sender: msg.sender,
+      message:
+        typeof msg.message === 'string'
+          ? msg.message
+          : (msg.message as SafeHtml).toString(),
+    }));
     this.conversationService
-      .saveConversation(this.conversation)
+      .saveConversation(sanitizedConversation)
       .subscribe((response) => {
         if (response.success) {
           console.log('Conversation saved successfully');
