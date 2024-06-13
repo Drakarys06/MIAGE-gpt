@@ -31,7 +31,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies for ${{ matrix.location }}
         # This step installs the dependencies for the specified location.
-        run: npm ci
+        run: npm i
         working-directory: ${{ matrix.location }}
       - name: Build
         # This step builds the project.
