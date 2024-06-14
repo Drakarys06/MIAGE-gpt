@@ -10,7 +10,7 @@ export class ConversationService {
 
   constructor(private http: HttpClient) {}
 
-  createConversation(title: number): Observable<any> {
+  createConversation(title: string): Observable<any> {
     return this.http.post<any>(`${this.endpointURL}/create`, { title });
   }
 

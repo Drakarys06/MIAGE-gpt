@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ConversationService } from '../../core/services/conversation.service';
 import { GptService } from '../../core/services/gpt.service';
-import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
+import { ConversationEventService } from '../../core/services/conversation-event-service.service';
 
 @Component({
   selector: 'app-home',
@@ -18,6 +18,7 @@ export class HomeComponent implements OnInit {
     private conversationService: ConversationService,
     private gptService: GptService,
     private sanitizer: DomSanitizer,
+    private conversationEventService: ConversationEventService,
   ) {}
 
   ngOnInit(): void {
@@ -33,7 +34,21 @@ export class HomeComponent implements OnInit {
           message: this.sanitizer.bypassSecurityTrustHtml(msg.message),
         }));
       } else {
-        this.createNewConversation();
+        this.createNewConversationAndLoad();
+      }
+    });
+  }
+
+  createNewConversationAndLoad() {
+    const title = 'Chat' + Math.floor(Math.random() * 1000);
+    this.conversationService.createConversation(title).subscribe((response) => {
+      if (response.success) {
+        this.currentConversationId = response.conversation._id;
+        this.conversation = [];
+        this.saveConversation();
+        this.conversationEventService.notifyConversationCreated(
+          this.currentConversationId,
+        ); // Notify the sidebar about the new conversation
       }
     });
   }
@@ -48,28 +63,6 @@ export class HomeComponent implements OnInit {
         }));
       }
     });
-  }
-
-  createNewConversation() {
-    this.conversationService
-      .createConversation(this.conversation.length)
-      .subscribe((response) => {
-        if (response.success) {
-          this.currentConversationId = response.conversation._id;
-          this.conversationService
-            .listConversations()
-            .subscribe((listResponse) => {
-              if (listResponse.success) {
-                const sidebarComponent = <SidebarComponent>(
-                  (<any>document.querySelector('app-sidebar')).__ngContext__
-                );
-                if (sidebarComponent) {
-                  sidebarComponent.loadConversations();
-                }
-              }
-            });
-        }
-      });
   }
 
   saveConversation() {
@@ -92,7 +85,7 @@ export class HomeComponent implements OnInit {
     if (this.prompt.trim() === '') return;
 
     if (!this.currentConversationId) {
-      this.createNewConversation();
+      this.createNewConversationAndLoad();
     }
 
     this.conversation.push({ sender: 'user', message: this.prompt });
