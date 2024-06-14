@@ -1,7 +1,7 @@
 import chatRoutes from "./chat.js";
 import imageRoutes from "./image.js";
 import voiceRoutes from "./voice.js";
-import conversationRoutes from "./conversationRoutes.js";
+import conversationRoutes from "./conversation.js";
 
 export const setupRoutes = (app) => {
   app.use("/chat", chatRoutes);

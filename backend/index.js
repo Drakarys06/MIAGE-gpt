@@ -10,10 +10,6 @@ dotenv.config();
 const app = express();
 const port = 3001;
 
-app.use(cors());
-
-app.use(express.json());
-
 // Connexion à la base de données MongoDB
 mongoose
   .connect(process.env.MONGODB_URI, {

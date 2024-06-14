@@ -10,11 +10,23 @@ export class ConversationService {
 
   constructor(private http: HttpClient) {}
 
-  saveConversation(messages: any[]): Observable<any> {
-    return this.http.post<any>(`${this.endpointURL}/save`, { messages });
+  createConversation(title: string): Observable<any> {
+    return this.http.post<any>(`${this.endpointURL}/create`, { title });
   }
 
-  loadConversation(): Observable<any> {
-    return this.http.get<any>(`${this.endpointURL}/load`);
+  saveConversation(id: string, messages: any[]): Observable<any> {
+    return this.http.post<any>(`${this.endpointURL}/save`, { id, messages });
+  }
+
+  loadConversation(id: string): Observable<any> {
+    return this.http.get<any>(`${this.endpointURL}/load/${id}`);
+  }
+
+  listConversations(): Observable<any> {
+    return this.http.get<any>(`${this.endpointURL}/list`);
+  }
+
+  getLastConversation(): Observable<any> {
+    return this.http.get<any>(`${this.endpointURL}/last`);
   }
 }
