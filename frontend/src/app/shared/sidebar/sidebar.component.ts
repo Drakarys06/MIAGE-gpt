@@ -46,7 +46,7 @@ export class SidebarComponent implements OnInit {
   }
 
   createConversation() {
-    const title = 'New Conversation';
+    const title = 'Chat' + Math.floor(Math.random() * 1000);
     this.conversationService.createConversation(title).subscribe((response) => {
       if (response.success) {
         this.conversations.unshift(response.conversation);
