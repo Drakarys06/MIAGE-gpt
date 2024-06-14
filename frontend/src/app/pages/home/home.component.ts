@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ConversationService } from '../../core/services/conversation.service';
 import { GptService } from '../../core/services/gpt.service';
+import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-home',
@@ -20,7 +21,7 @@ export class HomeComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // this.loadLastConversation();
+    this.loadLastConversation();
   }
 
   loadLastConversation() {
@@ -32,7 +33,7 @@ export class HomeComponent implements OnInit {
           message: this.sanitizer.bypassSecurityTrustHtml(msg.message),
         }));
       } else {
-        this.conversationService.createConversation(0);
+        this.createNewConversation();
       }
     });
   }
@@ -47,6 +48,28 @@ export class HomeComponent implements OnInit {
         }));
       }
     });
+  }
+
+  createNewConversation() {
+    this.conversationService
+      .createConversation(this.conversation.length)
+      .subscribe((response) => {
+        if (response.success) {
+          this.currentConversationId = response.conversation._id;
+          this.conversationService
+            .listConversations()
+            .subscribe((listResponse) => {
+              if (listResponse.success) {
+                const sidebarComponent = <SidebarComponent>(
+                  (<any>document.querySelector('app-sidebar')).__ngContext__
+                );
+                if (sidebarComponent) {
+                  sidebarComponent.loadConversations();
+                }
+              }
+            });
+        }
+      });
   }
 
   saveConversation() {
@@ -67,7 +90,11 @@ export class HomeComponent implements OnInit {
 
   getMessage() {
     if (this.prompt.trim() === '') return;
-    // Add user message to conversation
+
+    if (!this.currentConversationId) {
+      this.createNewConversation();
+    }
+
     this.conversation.push({ sender: 'user', message: this.prompt });
 
     if (this.prompt.startsWith('/image')) {

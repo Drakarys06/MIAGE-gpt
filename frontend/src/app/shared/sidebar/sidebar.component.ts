@@ -31,7 +31,7 @@ export class SidebarComponent implements OnInit {
       .createConversation(this.newTitle++)
       .subscribe((response) => {
         if (response.success) {
-          this.conversations.push(response.conversation);
+          this.conversations.unshift(response.conversation);
         }
       });
   }

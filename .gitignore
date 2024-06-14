@@ -5,3 +5,4 @@ package-lock.json
 .idea
 .code
 .DS_Store
+*.mp3
