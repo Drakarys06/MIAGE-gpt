@@ -47,8 +47,8 @@ export class HomeComponent implements OnInit {
         this.conversation = [];
         this.saveConversation();
         this.conversationEventService.notifyConversationCreated(
-          this.currentConversationId,
-        ); // Notify the sidebar about the new conversation
+          response.conversation._id,
+        );
       }
     });
   }

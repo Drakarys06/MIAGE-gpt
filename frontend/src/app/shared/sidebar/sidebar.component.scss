@@ -23,23 +23,19 @@ button:hover {
 }
 
 .history {
-  flex-grow: 1;
-  width: 100%;
-  overflow-y: auto;
-}
+  p {
+    cursor: pointer;
+    padding: 10px;
+    margin: 5px 0;
+    transition: background-color 0.3s;
 
-.history p {
-  padding: 10px;
-  margin: 5px 0;
-  cursor: pointer;
-  border-radius: 5px;
-}
+    &:hover {
+      background-color: #3e3e3e;
+    }
 
-.history p:hover {
-  background-color: #3b3e45;
-}
-
-nav p {
-  margin-top: 20px;
-  font-size: 20px;
+    &.active {
+      background-color: #007bff;
+      color: white;
+    }
+  }
 }

@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs';
 export class SidebarComponent implements OnInit {
   conversations: any[] = [];
   conversationCreatedSubscription: Subscription;
+  activeConversationId: string = '';
 
   @Output() conversationSelected = new EventEmitter<string>();
 
@@ -50,6 +51,7 @@ export class SidebarComponent implements OnInit {
     this.conversationService.createConversation(title).subscribe((response) => {
       if (response.success) {
         this.conversations.unshift(response.conversation);
+        this.selectConversation(response.conversation._id);
         this.conversationEventService.notifyConversationCreated(
           response.conversation._id,
         );
@@ -58,6 +60,7 @@ export class SidebarComponent implements OnInit {
   }
 
   selectConversation(id: string) {
+    this.activeConversationId = id;
     this.conversationSelected.emit(id);
   }
 }
