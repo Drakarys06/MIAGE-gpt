@@ -1,18 +1,42 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { ConversationService } from '../../core/services/conversation.service';
 
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.scss',
+  styleUrls: ['./sidebar.component.scss'],
 })
-export class SidebarComponent {
-  history: string[] = [];
+export class SidebarComponent implements OnInit {
+  conversations: any[] = [];
+  newTitle: number = 0;
 
-  newChat() {
-    // Logic for creating a new chat
+  @Output() conversationSelected = new EventEmitter<string>();
+
+  constructor(private conversationService: ConversationService) {}
+
+  ngOnInit(): void {
+    this.loadConversations();
   }
 
-  setPrompt(prompt: string) {
-    // Logic for setting the prompt in the main component
+  loadConversations() {
+    this.conversationService.listConversations().subscribe((response) => {
+      if (response.success) {
+        this.conversations = response.conversations;
+      }
+    });
+  }
+
+  createConversation() {
+    this.conversationService
+      .createConversation(this.newTitle++)
+      .subscribe((response) => {
+        if (response.success) {
+          this.conversations.push(response.conversation);
+        }
+      });
+  }
+
+  selectConversation(id: string) {
+    this.conversationSelected.emit(id);
   }
 }

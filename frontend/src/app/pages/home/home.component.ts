@@ -11,6 +11,7 @@ import { GptService } from '../../core/services/gpt.service';
 export class HomeComponent implements OnInit {
   prompt: string = '';
   conversation: { sender: string; message: string | SafeHtml }[] = [];
+  currentConversationId: string = '';
 
   constructor(
     private conversationService: ConversationService,
@@ -19,11 +20,26 @@ export class HomeComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadConversation();
+    // this.loadLastConversation();
   }
 
-  loadConversation() {
-    this.conversationService.loadConversation().subscribe((response) => {
+  loadLastConversation() {
+    this.conversationService.getLastConversation().subscribe((response) => {
+      if (response.success && response.conversation) {
+        this.currentConversationId = response.conversation._id;
+        this.conversation = response.conversation.messages.map((msg: any) => ({
+          ...msg,
+          message: this.sanitizer.bypassSecurityTrustHtml(msg.message),
+        }));
+      } else {
+        this.conversationService.createConversation(0);
+      }
+    });
+  }
+
+  loadConversation(id: string) {
+    this.currentConversationId = id;
+    this.conversationService.loadConversation(id).subscribe((response) => {
       if (response.success) {
         this.conversation = response.conversation.messages.map((msg: any) => ({
           ...msg,
@@ -34,15 +50,14 @@ export class HomeComponent implements OnInit {
   }
 
   saveConversation() {
+    if (!this.currentConversationId) return;
     const sanitizedConversation = this.conversation.map((msg) => ({
       sender: msg.sender,
       message:
-        typeof msg.message === 'string'
-          ? msg.message
-          : (msg.message as SafeHtml).toString(),
+        typeof msg.message === 'string' ? msg.message : msg.message.toString(),
     }));
     this.conversationService
-      .saveConversation(sanitizedConversation)
+      .saveConversation(this.currentConversationId, sanitizedConversation)
       .subscribe((response) => {
         if (response.success) {
           console.log('Conversation saved successfully');
