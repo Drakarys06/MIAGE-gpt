@@ -12,8 +12,8 @@ MiageGPT est une application de chat basée sur GPT-3.5-turbo, capable de géné
 
 - 🗣️ Gestion de chat classique avec historique des conversations
 - 🎨 Commandes spéciales pour :
-    - Générer des images avec Dall-E (`/image`)
-    - Générer des réponses vocalisées (`/speech`)
+  - Générer des images avec Dall-E (`/image`)
+  - Générer des réponses vocalisées (`/speech`)
 - 📚 Créer et gérer plusieurs conversations
 
 ## Prérequis 📋
@@ -80,12 +80,26 @@ ng serve
 
 4. Accéder à l'application via le navigateur à l'adresse [http://localhost:4200](http://localhost:4200).
 
+### Installation de la base de données MongoDB avec Dockerfile
+1. Construire l'image Docker pour MongoDB :
+
+Se placer a la racine du projet et executer la commande suivante :
+
+```bash
+docker build -t image-mongo-miage-gpt .
+```
+
+2. Exécuter le conteneur MongoDB :
+
+```bash
+docker run -d -p 27017:27017 --name mongo-miage-gpt image-mongo-miage-gpt
+```
+
 ## Utilisation 💬
 
 ### Commandes Spéciales
 
-- le chat basique est disponible en tapant du texte dans la zone de texte et en appuyant sur `Entrée`.
-- `!help` : Afficher la liste des commandes spéciales.
+- Le chat basique est disponible en tapant du texte dans la zone de texte et en appuyant sur `Entrée`.
 - `/image <description>` : Générer une image basée sur la description fournie.
 - `/speech <texte>` : Générer une réponse vocalisée basée sur le texte fourni.
 
