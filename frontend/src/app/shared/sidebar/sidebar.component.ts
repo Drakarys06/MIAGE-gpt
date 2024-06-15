@@ -1,18 +1,66 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { ConversationService } from '../../core/services/conversation.service';
+import { ConversationEventService } from '../../core/services/conversation-event-service.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.scss',
+  styleUrls: ['./sidebar.component.scss'],
 })
-export class SidebarComponent {
-  history: string[] = [];
+export class SidebarComponent implements OnInit {
+  conversations: any[] = [];
+  conversationCreatedSubscription: Subscription;
+  activeConversationId: string = '';
 
-  newChat() {
-    // Logic for creating a new chat
+  @Output() conversationSelected = new EventEmitter<string>();
+
+  constructor(
+    private conversationService: ConversationService,
+    private conversationEventService: ConversationEventService,
+  ) {
+    this.conversationCreatedSubscription =
+      this.conversationEventService.conversationCreated$.subscribe(
+        (conversationId: string) => {
+          this.loadConversations(conversationId);
+        },
+      );
   }
 
-  setPrompt(prompt: string) {
-    // Logic for setting the prompt in the main component
+  ngOnInit(): void {
+    this.loadConversations();
+  }
+
+  ngOnDestroy(): void {
+    this.conversationCreatedSubscription.unsubscribe();
+  }
+
+  loadConversations(selectedConversationId?: string) {
+    this.conversationService.listConversations().subscribe((response) => {
+      if (response.success) {
+        this.conversations = response.conversations;
+        if (selectedConversationId) {
+          this.selectConversation(selectedConversationId);
+        }
+      }
+    });
+  }
+
+  createConversation() {
+    const title = 'Chat' + Math.floor(Math.random() * 1000);
+    this.conversationService.createConversation(title).subscribe((response) => {
+      if (response.success) {
+        this.conversations.unshift(response.conversation);
+        this.selectConversation(response.conversation._id);
+        this.conversationEventService.notifyConversationCreated(
+          response.conversation._id,
+        );
+      }
+    });
+  }
+
+  selectConversation(id: string) {
+    this.activeConversationId = id;
+    this.conversationSelected.emit(id);
   }
 }

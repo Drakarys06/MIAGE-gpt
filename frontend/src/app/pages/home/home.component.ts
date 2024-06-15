@@ -1,25 +1,99 @@
-import { Component } from '@angular/core';
-import { GptService } from '../../core/services/gpt.service';
+import { Component, OnInit, SecurityContext } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ConversationService } from '../../core/services/conversation.service';
+import { GptService } from '../../core/services/gpt.service';
+import { ConversationEventService } from '../../core/services/conversation-event-service.service';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   prompt: string = '';
-  conversation: { sender: string; message: string | SafeHtml }[] = [];
+  conversation: { sender: string; message: SafeHtml }[] = [];
+  currentConversationId: string = '';
 
   constructor(
+    private conversationService: ConversationService,
     private gptService: GptService,
     private sanitizer: DomSanitizer,
+    private conversationEventService: ConversationEventService,
   ) {}
+
+  ngOnInit(): void {
+    this.loadLastConversation();
+  }
+
+  loadLastConversation() {
+    this.conversationService.getLastConversation().subscribe((response) => {
+      if (response.success && response.conversation) {
+        this.currentConversationId = response.conversation._id;
+        this.conversation = response.conversation.messages.map((msg: any) => ({
+          sender: msg.sender,
+          message: this.sanitizer.bypassSecurityTrustHtml(msg.message),
+        }));
+        this.conversationEventService.notifyConversationCreated(
+          this.currentConversationId,
+        ); // Notify the sidebar about the current conversation
+      } else {
+        this.createNewConversationAndLoad();
+      }
+    });
+  }
+
+  createNewConversationAndLoad() {
+    const title = 'Chat' + Math.floor(Math.random() * 1000);
+    this.conversationService.createConversation(title).subscribe((response) => {
+      if (response.success) {
+        this.currentConversationId = response.conversation._id;
+        this.conversation = [];
+        this.saveConversation();
+        this.conversationEventService.notifyConversationCreated(
+          this.currentConversationId,
+        ); // Notify the sidebar about the new conversation
+      }
+    });
+  }
+
+  loadConversation(id: string) {
+    this.currentConversationId = id;
+    this.conversationService.loadConversation(id).subscribe((response) => {
+      if (response.success) {
+        this.conversation = response.conversation.messages.map((msg: any) => ({
+          sender: msg.sender,
+          message: this.sanitizer.bypassSecurityTrustHtml(msg.message),
+        }));
+      }
+    });
+  }
+
+  saveConversation() {
+    if (!this.currentConversationId) return;
+    const sanitizedConversation = this.conversation.map((msg) => ({
+      sender: msg.sender,
+      message: this.sanitizer.sanitize(SecurityContext.HTML, msg.message) || '',
+    }));
+    this.conversationService
+      .saveConversation(this.currentConversationId, sanitizedConversation)
+      .subscribe((response) => {
+        if (response.success) {
+          console.log('Conversation saved successfully');
+        }
+      });
+  }
 
   getMessage() {
     if (this.prompt.trim() === '') return;
-    // Add user message to conversation
-    this.conversation.push({ sender: 'user', message: this.prompt });
+
+    if (!this.currentConversationId) {
+      this.createNewConversationAndLoad();
+    }
+
+    this.conversation.push({
+      sender: 'user',
+      message: this.sanitizer.bypassSecurityTrustHtml(this.prompt),
+    });
 
     if (this.prompt.startsWith('/image')) {
       this.getImage(this.prompt.replace('/image', '').trim());
@@ -28,13 +102,18 @@ export class HomeComponent {
     } else {
       this.getChatResponse(this.prompt);
     }
-    this.prompt = ''; // Clear input after sending message
+    this.prompt = '';
+    this.saveConversation();
   }
 
   getChatResponse(prompt: string) {
     this.gptService.getChatResponse(prompt).subscribe((response) => {
       const botMessage = response.data.choices[0].message.content;
-      this.conversation.push({ sender: 'bot', message: botMessage });
+      this.conversation.push({
+        sender: 'bot',
+        message: this.sanitizer.bypassSecurityTrustHtml(botMessage),
+      });
+      this.saveConversation();
     });
   }
 
@@ -48,6 +127,7 @@ export class HomeComponent {
         sender: 'bot',
         message: sanitizedImage,
       });
+      this.saveConversation();
     });
   }
 
@@ -63,10 +143,11 @@ export class HomeComponent {
         sender: 'bot',
         message: sanitizedAudio,
       });
+      this.saveConversation();
     });
   }
 
-  formatMessage(message: { sender: string; message: string | SafeHtml }) {
+  formatMessage(message: { sender: string; message: SafeHtml }) {
     const className =
       message.sender === 'user' ? 'message user' : 'message bot';
     return {
